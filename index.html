@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TimeBreak</title>
+
+    <link rel="shortcut icon" type="image/png" href="Icons/Colorizer.png" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#00ff80" />
+    <meta name="description" content="An app to know when to take your break" />
+
+    <style>
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --main-color: #000000;
+          --card-color: #333333;
+        }
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --main-color: #ffffff;
+          --card-color: #cccccc;
+        }
+      }
+
+      :root {
+        --accent-green: #00ff80;
+      }
+
+      * {
+        font-size: 16px;
+        font-weight: 400;
+        padding: 0px;
+        margin: 0px;
+        text-box-trim: trim-both;
+        text-box-edge: cap alphabetic;
+      }
+
+      @font-face {
+        font-family: "San Fransisco";
+        src: url("Fonts/SF-Pro-Display-Bold.otf");
+        font-weight: 900;
+      }
+      @font-face {
+        font-family: "San Fransisco";
+        src: url("Fonts/SF-Pro-Display-Regular.otf");
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: "San Fransisco Mono";
+        src: url("Fonts/SFMono-Regular.otf");
+        font-weight: 500;
+      }
+
+      body {
+        font-family: "San Fransisco", sans-serif;
+        background-color: var(--main-color);
+        margin: 0px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .box {
+        border-radius: 48px;
+        background-color: var(--card-color);
+        width: -webkit-fill-available;
+        padding-bottom: 32px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        overflow: clip;
+      }
+
+      h2 {
+        font-size: 32px;
+        padding: 32px 0px 0px 32px;
+      }
+
+      .time,
+      .settings {
+        display: flex;
+        justify-content: flex-end;
+        gap: 4px;
+        padding-right: 32px;
+      }
+
+      .AMPM,
+      .settings-items {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .settings-items {
+        gap: 16px;
+      }
+
+      .settings-items > span {
+        font-size: 24px;
+      }
+
+      .AMPM > span {
+        font-size: 24px;
+        cursor: pointer;
+        user-select: none;
+        transition: color 0.1s;
+      }
+
+      .time-input {
+        font-size: 64px;
+        outline: none;
+        border: none;
+        border-radius: 10px;
+        transition: none;
+      }
+
+      .time-input:focus {
+        outline: none;
+        border: none;
+      }
+
+      .time-input.focused {
+        outline: none;
+        border: none;
+      }
+
+      .chips {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        max-width: 100%;
+        padding: 0px 32px;
+        scrollbar-width: none;
+      }
+
+      .chips::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+      }
+
+      .chips > *,
+      .settings-items > span:first-child {
+        font-family: "San Fransisco Mono";
+        background-color: var(--accent-green);
+        border-radius: 16px;
+        padding: 8px 12px;
+        font-size: 24px;
+        white-space: nowrap;
+        flex: 0 0 auto;
+        cursor: pointer;
+        transition: background 0.1s, color 0.1s;
+      }
+
+      .chips > svg {
+        width: 24px;
+        height: 24px;
+        padding: 4px;
+      }
+
+      .accent-background {
+        background-color: var(--accent-green);
+      }
+
+      .accent-text {
+        color: var(--accent-green);
+      }
+
+      .bold {
+        font-weight: 700;
+      }
+
+      .mono {
+        font-family: "San Fransisco Mono";
+      }
+
+      #resetWebApp {
+        color: #df2020;
+      }
+
+      #install-btn {
+        display: none;
+        margin-top: 2rem;
+        padding: 0.5rem 1rem;
+        color: #000;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h2 class="accent-text">Start:</h2>
+      <div class="time">
+        <div id="startTimeInput" class="time-input mono accent-text" contenteditable="true">00:00</div>
+        <div class="AMPM mono" id="startAMPM">
+          <span id="startAM" class="accent-text">AM</span>
+          <span id="startPM" class="inactive">PM</span>
+        </div>
+      </div>
+      <div class="chips" data-chip-target="startTimeInput" id="startChips">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          width="24"
+          height="24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M12 5l0 14" />
+          <path d="M5 12l14 0" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2 class="accent-text">End:</h2>
+      <div class="time">
+        <div id="endTimeInput" class="time-input mono accent-text" contenteditable="true">00:00</div>
+        <div class="AMPM mono" id="endAMPM">
+          <span id="endAM" class="inactive">AM</span>
+          <span id="endPM" class="accent-text">PM</span>
+        </div>
+      </div>
+      <div class="chips" data-chip-target="endTimeInput" id="endChips">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          width="24"
+          height="24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M12 5l0 14" />
+          <path d="M5 12l14 0" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2 class="accent-text">Break Length:</h2>
+      <div class="time">
+        <div id="breakTimeInput" class="time-input mono accent-text" contenteditable="true">30</div>
+        <div class="AMPM mono">
+          <span></span>
+          <span class="accent-text">MIN</span>
+        </div>
+      </div>
+      <div class="chips" data-chip-target="breakTimeInput" id="breakChips"></div>
+    </div>
+
+    <div class="box accent-background">
+      <h2 class="bold">Take your break at:</h2>
+      <div class="time">
+        <div id="breakResultTime" class="time-input mono">00:00</div>
+        <div class="AMPM mono" id="resultAMPM">
+          <span></span>
+          <span class="">PM</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2 class="accent-text">Settings:</h2>
+      <div class="settings">
+        <div class="settings-items mono" id="setting">
+          <span class="accent-background">Accent Color</span>
+          <span class="accent-text">Export Saved Times</span>
+          <span id="resetWebApp">Reset Web App</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="install-btn">Install App</button>
+
+    <input type="color" id="accentColorPicker" style="display: none" />
+
+    <script>
+      // =========================
+      // ===== PWA INSTALL =======
+      // =========================
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js");
+      }
+
+      let deferredPrompt = null;
+      const installBtn = document.getElementById("install-btn");
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = "";
+      });
+
+      installBtn.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+        installBtn.style.display = "none";
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+      });
+
+      window.addEventListener("appinstalled", () => {
+        installBtn.style.display = "none";
+      });
+
+      // =========================
+      // ======= ELEMENTS ========
+      // =========================
+      const el = {
+        startInput: document.getElementById("startTimeInput"),
+        endInput: document.getElementById("endTimeInput"),
+        breakInput: document.getElementById("breakTimeInput"),
+
+        startChips: document.getElementById("startChips"),
+        endChips: document.getElementById("endChips"),
+        breakChips: document.getElementById("breakChips"),
+
+        startAM: document.getElementById("startAM"),
+        startPM: document.getElementById("startPM"),
+        endAM: document.getElementById("endAM"),
+        endPM: document.getElementById("endPM"),
+
+        resultTime: document.getElementById("breakResultTime"),
+        resultAMPM: document.getElementById("resultAMPM"),
+
+        resetBtn: document.getElementById("resetWebApp"),
+      };
+
+      // =========================
+      // ========= STATE =========
+      // =========================
+      let startMeridiem = "AM";
+      let endMeridiem = "PM";
+
+      const DEFAULTS = {
+        // start: ["8:00AM", "6:45AM", "2:00PM", "1:45PM"],
+        start: [],
+        // end: ["3:00PM", "2:00PM", "9:30PM", "8:45PM"],
+        end: [],
+        break: ["30", "15", "45", "60"],
+      };
+
+      const STORAGE_KEYS = {
+        start: "chips_start",
+        end: "chips_end",
+        break: "chips_break",
+        lastStart: "last_start",
+        lastEnd: "last_end",
+      };
+
+      const pad = (n) => n.toString().padStart(2, "0");
+
+      // =========================
+      // ====== UTILITIES ========
+      // =========================
+      function parseTime(str, meridiem) {
+        const match = str.match(/^(\d{1,2}):(\d{2})$/);
+        if (!match) return null;
+
+        let [, h, m] = match.map(Number);
+        if (h > 23 || m > 59) return null;
+
+        let newMeridiem = meridiem;
+        if (h >= 12) {
+          newMeridiem = "PM";
+          if (h > 12) h -= 12;
+        } else if (h === 0) {
+          h = 12;
+          newMeridiem = "AM";
+        }
+
+        return { h, m, meridiem: newMeridiem };
+      }
+
+      function toggleMeridiem(amEl, pmEl, targetVar, value) {
+        targetVar.value = value;
+        const isAM = value === "AM";
+        amEl.classList.toggle("accent-text", isAM);
+        amEl.classList.toggle("inactive", !isAM);
+        pmEl.classList.toggle("accent-text", !isAM);
+        pmEl.classList.toggle("inactive", isAM);
+        calculateBreakTime();
+      }
+
+      function getStoredChips(kind) {
+        try {
+          const data = JSON.parse(localStorage.getItem(STORAGE_KEYS[kind]));
+          if (Array.isArray(data)) return data;
+        } catch {}
+        return [...DEFAULTS[kind]];
+      }
+
+      function setStoredChips(kind, arr) {
+        localStorage.setItem(STORAGE_KEYS[kind], JSON.stringify(arr));
+      }
+
+      function createChip(label, onClick) {
+        const chip = document.createElement("p");
+        chip.innerText = label;
+        chip.addEventListener("click", onClick);
+        return chip;
+      }
+
+      function extractTimeAndMeridiem(raw, kind) {
+        if (kind === "break") return { time: raw, meridiem: undefined };
+        const m = raw.match(/^(\d{1,2}:\d{2})\s*(am|pm)?$/i);
+        return m ? { time: m[1], meridiem: m[2]?.toUpperCase() } : { time: raw };
+      }
+
+      function setInputValue(input, value, meridiem, kind) {
+        input.innerText = value;
+        input.focus();
+
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(input);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        if (meridiem) {
+          if (kind === "start") {
+            startMeridiem = meridiem;
+            toggleMeridiem(el.startAM, el.startPM, { value: startMeridiem }, meridiem);
+          } else if (kind === "end") {
+            endMeridiem = meridiem;
+            toggleMeridiem(el.endAM, el.endPM, { value: endMeridiem }, meridiem);
+          }
+        }
+
+        calculateBreakTime();
+      }
+
+      function renderChips(kind, chipsContainer, inputEl) {
+        const chips = getStoredChips(kind);
+        // chipsContainer.innerHTML = "";
+
+        // if (!chips.length) {
+        //   chipsContainer.style.display = "none";
+        //   return;
+        // }
+
+        chipsContainer.style.display = "flex";
+
+        chips.forEach((val) => {
+          const { time, meridiem } = extractTimeAndMeridiem(val, kind);
+          chipsContainer.appendChild(createChip(val, () => setInputValue(inputEl, time, meridiem, kind)));
+        });
+      }
+
+      // =========================
+      // ===== INPUT HANDLING ====
+      // =========================
+      function handleInputBlur(inputEl, kind, chipsEl, meridiemGetter) {
+        inputEl.addEventListener("blur", () => {
+          inputEl.classList.remove("focused");
+          let val = inputEl.innerText.replace(/\s/g, "").trim();
+
+          if (kind === "start" || kind === "end") {
+            if (/^\d{3,4}$/.test(val)) {
+              val = pad(Math.floor(val / 100)) + ":" + pad(val % 100);
+            }
+
+            const parsed = parseTime(val, meridiemGetter());
+            if (!parsed) return (inputEl.innerText = "12:00");
+
+            inputEl.innerText = `${pad(parsed.h)}:${pad(parsed.m)}`;
+
+            if (parsed.meridiem !== meridiemGetter()) {
+              if (kind === "start") {
+                startMeridiem = parsed.meridiem;
+                toggleMeridiem(el.startAM, el.startPM, { value: startMeridiem }, startMeridiem);
+              } else {
+                endMeridiem = parsed.meridiem;
+                toggleMeridiem(el.endAM, el.endPM, { value: endMeridiem }, endMeridiem);
+              }
+            }
+          }
+
+          if (kind === "break") {
+            inputEl.innerText = val.replace(/[^\d]/g, "");
+          }
+
+          calculateBreakTime();
+        });
+
+        inputEl.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") e.preventDefault(), inputEl.blur();
+        });
+      }
+
+      // =========================
+      // ==== CORE CALCULATION ====
+      // =========================
+      function calculateBreakTime() {
+        const clean = (el) => el.innerText.replace(/\s/g, "").trim();
+
+        const s = parseTime(clean(el.startInput), startMeridiem);
+        const e = parseTime(clean(el.endInput), endMeridiem);
+        const breakVal = Math.max(0, parseInt(clean(el.breakInput)) || 0);
+
+        if (!s || !e) return;
+
+        const now = new Date();
+        const to24 = (h, m, mer) =>
+          new Date(now.getFullYear(), now.getMonth(), now.getDate(), mer === "PM" && h !== 12 ? h + 12 : mer === "AM" && h === 12 ? 0 : h, m);
+
+        const startDate = to24(s.h, s.m, s.meridiem);
+        let endDate = to24(e.h, e.m, e.meridiem);
+        if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
+
+        const totalMins = (endDate - startDate) / 60000 - breakVal;
+        if (totalMins <= 0) return;
+
+        const breakTime = new Date(startDate.getTime() + (totalMins / 2) * 60000);
+        const hour24 = breakTime.getHours();
+        const minute = breakTime.getMinutes();
+        const mer = hour24 >= 12 ? "PM" : "AM";
+        const hour12 = hour24 % 12 || 12;
+
+        el.resultTime.innerText = `${pad(hour12)}:${pad(minute)}`;
+        el.resultAMPM.children[1].innerText = mer;
+      }
+
+      // =========================
+      // ======== RESET =========
+      // =========================
+      el.resetBtn.addEventListener("click", () => {
+        if (!confirm("Are you sure you want to reset Web App?")) return;
+
+        Object.keys(STORAGE_KEYS).forEach((k) => localStorage.removeItem(STORAGE_KEYS[k]));
+        localStorage.removeItem("accentColor");
+
+        document.documentElement.style.setProperty("--accent-green", "#00ff80");
+
+        ["start", "end", "break"].forEach((kind) => renderChips(kind, el[`${kind}Chips`], el[`${kind}Input`]));
+
+        // alert("TimeBreaker has been reset!");
+        location.reload();
+      });
+
+      // =========================
+      // ======== INIT ===========
+      // =========================
+      [startTimeInput, endTimeInput, breakTimeInput] = [el.startInput, el.endInput, el.breakInput];
+
+      [startTimeInput, endTimeInput, breakTimeInput].forEach((elInput) => {
+        elInput.addEventListener("focus", () => elInput.classList.add("focused"));
+        elInput.addEventListener("input", calculateBreakTime);
+      });
+
+      handleInputBlur(el.startInput, "start", el.startChips, () => startMeridiem);
+      handleInputBlur(el.endInput, "end", el.endChips, () => endMeridiem);
+      handleInputBlur(el.breakInput, "break", el.breakChips);
+
+      // Restore last used start/end times
+      const lastStart = localStorage.getItem(STORAGE_KEYS.lastStart);
+      const lastEnd = localStorage.getItem(STORAGE_KEYS.lastEnd);
+
+      if (lastStart) {
+        const m = lastStart.match(/^(\d{1,2}:\d{2})(AM|PM)$/);
+        if (m) {
+          el.startInput.innerText = m[1];
+          startMeridiem = m[2];
+        }
+      }
+
+      if (lastEnd) {
+        const m = lastEnd.match(/^(\d{1,2}:\d{2})(AM|PM)$/);
+        if (m) {
+          el.endInput.innerText = m[1];
+          endMeridiem = m[2];
+        }
+      }
+
+      renderChips("start", el.startChips, el.startInput);
+      renderChips("end", el.endChips, el.endInput);
+      renderChips("break", el.breakChips, el.breakInput);
+
+      calculateBreakTime();
+      toggleMeridiem(el.startAM, el.startPM, { value: startMeridiem }, startMeridiem);
+      toggleMeridiem(el.endAM, el.endPM, { value: endMeridiem }, endMeridiem);
+      // =========================
+      // ===== AM/PM CLICK =======
+      // =========================
+      el.startAM.addEventListener("click", () => {
+        startMeridiem = "AM";
+        toggleMeridiem(el.startAM, el.startPM, { value: startMeridiem }, "AM");
+      });
+
+      el.startPM.addEventListener("click", () => {
+        startMeridiem = "PM";
+        toggleMeridiem(el.startAM, el.startPM, { value: startMeridiem }, "PM");
+      });
+
+      el.endAM.addEventListener("click", () => {
+        endMeridiem = "AM";
+        toggleMeridiem(el.endAM, el.endPM, { value: endMeridiem }, "AM");
+      });
+
+      el.endPM.addEventListener("click", () => {
+        endMeridiem = "PM";
+        toggleMeridiem(el.endAM, el.endPM, { value: endMeridiem }, "PM");
+      });
+
+      // =========================
+      // ===== ADD BUTTONS =======
+      // =========================
+      function addChip(kind, inputEl, chipsEl, meridiemGetter) {
+        let val = inputEl.innerText.replace(/\s/g, "").trim();
+        if (/^\d{3,4}$/.test(val)) {
+          val = pad(Math.floor(val / 100)) + ":" + pad(val % 100);
+        }
+
+        const parsed = parseTime(val, meridiemGetter());
+        if (!parsed) return alert("Invalid time format.");
+
+        const formatted = `${pad(parsed.h)}:${pad(parsed.m)}${parsed.meridiem}`;
+        const chips = getStoredChips(kind);
+        if (!chips.includes(formatted)) {
+          chips.unshift(formatted);
+          if (chips.length > 8) chips.pop();
+          setStoredChips(kind, chips);
+          renderChips(kind, chipsEl, inputEl);
+        }
+
+        // Save last entered time
+        if (kind === "start") {
+          localStorage.setItem(STORAGE_KEYS.lastStart, inputEl.innerText + startMeridiem);
+        } else if (kind === "end") {
+          localStorage.setItem(STORAGE_KEYS.lastEnd, inputEl.innerText + endMeridiem);
+        }
+      }
+
+      el.startChips.querySelector("svg").addEventListener("click", () => addChip("start", el.startInput, el.startChips, () => startMeridiem));
+      el.endChips.querySelector("svg").addEventListener("click", () => addChip("end", el.endInput, el.endChips, () => endMeridiem));
+      el.breakChips.querySelector("svg")?.addEventListener("click", () => addChip("break", el.breakInput, el.breakChips));
+
+      // =========================
+      // ===== ACCENT COLOR ======
+      // =========================
+      const COLOR_KEY = "accent_color";
+      const colorPicker = document.getElementById("accentColorPicker");
+      const accentButton = document.querySelector("#setting > span.accent-background");
+
+      // Load saved accent color
+      const savedColor = localStorage.getItem(COLOR_KEY);
+      if (savedColor) {
+        document.documentElement.style.setProperty("--accent-green", savedColor);
+        accentButton.style.backgroundColor = savedColor;
+        document.querySelectorAll(".accent-text").forEach((el) => (el.style.color = savedColor));
+      }
+
+      // When "Accent Color" is clicked
+      accentButton.addEventListener("click", () => {
+        colorPicker.value = rgbToHex(getComputedStyle(document.documentElement).getPropertyValue("--accent-green"));
+        colorPicker.click();
+      });
+
+      // When color is chosen
+      colorPicker.addEventListener("input", (e) => {
+        const color = e.target.value;
+        document.documentElement.style.setProperty("--accent-green", color);
+        accentButton.style.backgroundColor = color;
+        localStorage.setItem(COLOR_KEY, color);
+
+        // Update all accent-colored text
+        document.querySelectorAll(".accent-text").forEach((el) => (el.style.color = color));
+      });
+
+      // Utility: convert RGB to HEX (for picker initialization)
+      function rgbToHex(rgb) {
+        const res = rgb.match(/\d+/g);
+        if (!res) return "#00ff80";
+        return (
+          "#" +
+          res
+            .slice(0, 3)
+            .map((x) => parseInt(x).toString(16).padStart(2, "0"))
+            .join("")
+        );
+      }
+    </script>
+  </body>
+</html>
