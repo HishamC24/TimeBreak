@@ -37,6 +37,7 @@
         font-weight: 400;
         padding: 0px;
         margin: 0px;
+        -webkit-tap-highlight-color: transparent;
         text-box-trim: trim-both;
         text-box-edge: cap alphabetic;
       }
@@ -121,7 +122,7 @@
         font-size: 64px;
         outline: none;
         border: none;
-        border-radius: 10px;
+        /* border-radius: 10px; */
         transition: none;
       }
 
@@ -281,7 +282,8 @@
       <div class="settings">
         <div class="settings-items mono" id="setting">
           <span class="accent-background">Accent Color</span>
-          <span class="accent-text">Export Saved Times</span>
+          <span id="export" class="accent-text">Export Saved Times</span>
+          <span id="import" class="accent-text">Export Saved Times</span>
           <span id="resetWebApp">Reset Web App</span>
         </div>
       </div>
@@ -291,6 +293,35 @@
 
     <input type="color" id="accentColorPicker" style="display: none" />
 
+    <script type="module">
+      import { squircleObserver } from "https://esm.sh/corner-smoothing";
+
+      // Make applySquircles globally accessible
+      window.applySquircles = function applySquircles() {
+        // Query all elements on page
+        const allElements = document.querySelectorAll("*");
+
+        allElements.forEach((el) => {
+          const style = getComputedStyle(el);
+          const radius = parseFloat(style.borderRadius);
+
+          // Only apply if it actually has a visible border radius
+          if (radius > 0) {
+            squircleObserver(el, {
+              cornerRadius: radius,
+              cornerSmoothing: 0.6,
+              style: {
+                // Optional: use background color of element for fill
+                fill: style.backgroundColor,
+              },
+            });
+          }
+        });
+      };
+
+      // Wait for everything to render first
+      window.addEventListener("load", window.applySquircles);
+    </script>
     <script>
       // =========================
       // ===== PWA INSTALL =======
@@ -453,7 +484,7 @@
         // CLEAR THE CONTAINER TO PREVENT DUPLICATES:
         for (let i = chipsContainer.children.length - 1; i >= 0; i--) {
           // Don't remove <svg>, only remove <p> chips
-          console.log(chipsContainer.children[i].tagName);
+          // console.log(chipsContainer.children[i].tagName);
           if (chipsContainer.children[i].tagName !== "svg") {
             chipsContainer.removeChild(chipsContainer.children[i]);
           }
@@ -465,6 +496,9 @@
           const { time, meridiem } = extractTimeAndMeridiem(val, kind);
           chipsContainer.appendChild(createChip(val, () => setInputValue(inputEl, time, meridiem, kind)));
         });
+
+        // Re-run Squircles when chips are rendered (on chip add or other render)
+        if (window.applySquircles) window.applySquircles();
       }
 
       // =========================
