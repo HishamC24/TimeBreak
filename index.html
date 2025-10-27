@@ -11,7 +11,8 @@
     <meta name="description" content="An app to know when to take your break" />
 
     <style>
-      @media (prefers-color-scheme: dark) {
+      /* KEEP THIS I WILL FIX LATER, light mode looks terrible */
+      /* @media (prefers-color-scheme: dark) {
         :root {
           --main-color: #000000;
           --card-color: #333333;
@@ -20,12 +21,14 @@
 
       @media (prefers-color-scheme: light) {
         :root {
-          --main-color: #ffffff;
-          --card-color: #cccccc;
+          --main-color: #cccccc;
+          --card-color: #ffffff;
         }
-      }
+      } */
 
       :root {
+        --main-color: #000000;
+        --card-color: #333333;
         --accent-green: #00ff80;
       }
 
@@ -159,9 +162,10 @@
       }
 
       .chips > svg {
-        width: 24px;
-        height: 24px;
+        width: 25px;
+        height: 25px;
         padding: 4px;
+        /* padding: 4.6px; */
       }
 
       .accent-background {
@@ -210,8 +214,6 @@
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
-          width="24"
-          height="24"
           fill="none"
           stroke="currentColor"
           stroke-width="2"
@@ -238,8 +240,6 @@
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
-          width="24"
-          height="24"
           fill="none"
           stroke="currentColor"
           stroke-width="2"
@@ -450,12 +450,14 @@
 
       function renderChips(kind, chipsContainer, inputEl) {
         const chips = getStoredChips(kind);
-        // chipsContainer.innerHTML = "";
-
-        // if (!chips.length) {
-        //   chipsContainer.style.display = "none";
-        //   return;
-        // }
+        // CLEAR THE CONTAINER TO PREVENT DUPLICATES:
+        for (let i = chipsContainer.children.length - 1; i >= 0; i--) {
+          // Don't remove <svg>, only remove <p> chips
+          console.log(chipsContainer.children[i].tagName);
+          if (chipsContainer.children[i].tagName !== "svg") {
+            chipsContainer.removeChild(chipsContainer.children[i]);
+          }
+        }
 
         chipsContainer.style.display = "flex";
 
@@ -546,7 +548,7 @@
         if (!confirm("Are you sure you want to reset Web App?")) return;
 
         Object.keys(STORAGE_KEYS).forEach((k) => localStorage.removeItem(STORAGE_KEYS[k]));
-        localStorage.removeItem("accentColor");
+        localStorage.removeItem("accent_color");
 
         document.documentElement.style.setProperty("--accent-green", "#00ff80");
 
@@ -638,8 +640,9 @@
           chips.unshift(formatted);
           if (chips.length > 8) chips.pop();
           setStoredChips(kind, chips);
-          renderChips(kind, chipsEl, inputEl);
         }
+        // Always rerender, clearing possible duplicates visually:
+        renderChips(kind, chipsEl, inputEl);
 
         // Save last entered time
         if (kind === "start") {
