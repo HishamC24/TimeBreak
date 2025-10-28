@@ -283,7 +283,7 @@
         <div class="settings-items mono" id="setting">
           <span class="accent-background">Accent Color</span>
           <span id="export" class="accent-text">Export Saved Times</span>
-          <span id="import" class="accent-text">Export Saved Times</span>
+          <span id="import" class="accent-text">Import Saved Times</span>
           <span id="resetWebApp">Reset Web App</span>
         </div>
       </div>
@@ -292,6 +292,7 @@
     <button id="install-btn">Install App</button>
 
     <input type="color" id="accentColorPicker" style="display: none" />
+    <input type="file" id="importFileChooser" style="display: none" accept=".json,.txt,application/json" />
 
     <script type="module">
       import { squircleObserver } from "https://esm.sh/corner-smoothing";
@@ -372,6 +373,9 @@
         resultAMPM: document.getElementById("resultAMPM"),
 
         resetBtn: document.getElementById("resetWebApp"),
+        exportBtn: document.getElementById("export"),
+        importBtn: document.getElementById("import"),
+        importFileChooser: document.getElementById("importFileChooser"),
       };
 
       // =========================
@@ -396,6 +400,7 @@
         lastEnd: "last_end",
       };
 
+      const COLOR_KEY = "accent_color";
       const pad = (n) => n.toString().padStart(2, "0");
 
       // =========================
@@ -582,7 +587,7 @@
         if (!confirm("Are you sure you want to reset Web App?")) return;
 
         Object.keys(STORAGE_KEYS).forEach((k) => localStorage.removeItem(STORAGE_KEYS[k]));
-        localStorage.removeItem("accent_color");
+        localStorage.removeItem(COLOR_KEY);
 
         document.documentElement.style.setProperty("--accent-green", "#00ff80");
 
@@ -611,18 +616,18 @@
       const lastEnd = localStorage.getItem(STORAGE_KEYS.lastEnd);
 
       if (lastStart) {
-        const m = lastStart.match(/^(\d{1,2}:\d{2})(AM|PM)$/);
+        const m = lastStart.match(/^(\d{1,2}:\d{2})(AM|PM)$/i);
         if (m) {
           el.startInput.innerText = m[1];
-          startMeridiem = m[2];
+          startMeridiem = m[2].toUpperCase();
         }
       }
 
       if (lastEnd) {
-        const m = lastEnd.match(/^(\d{1,2}:\d{2})(AM|PM)$/);
+        const m = lastEnd.match(/^(\d{1,2}:\d{2})(AM|PM)$/i);
         if (m) {
           el.endInput.innerText = m[1];
-          endMeridiem = m[2];
+          endMeridiem = m[2].toUpperCase();
         }
       }
 
@@ -693,7 +698,7 @@
       // =========================
       // ===== ACCENT COLOR ======
       // =========================
-      const COLOR_KEY = "accent_color";
+
       const colorPicker = document.getElementById("accentColorPicker");
       const accentButton = document.querySelector("#setting > span.accent-background");
 
@@ -718,7 +723,6 @@
         accentButton.style.backgroundColor = color;
         localStorage.setItem(COLOR_KEY, color);
 
-        // Update all accent-colored text
         document.querySelectorAll(".accent-text").forEach((el) => (el.style.color = color));
       });
 
@@ -734,6 +738,71 @@
             .join("")
         );
       }
+
+      // =========================
+      // ====== EXPORT / IMPORT ===
+      // =========================
+
+      // EXPORT
+      el.exportBtn.addEventListener("click", () => {
+        const exportData = {
+          accent: getComputedStyle(document.documentElement).getPropertyValue("--accent-green").trim(),
+          start: getStoredChips("start"),
+          end: getStoredChips("end"),
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "TimeBreakData.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      // IMPORT
+      el.importBtn.addEventListener("click", () => {
+        el.importFileChooser.value = "";
+        el.importFileChooser.click();
+      });
+
+      el.importFileChooser.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+
+          if (typeof data !== "object") throw new Error("Invalid JSON structure.");
+
+          // Apply accent color
+          if (data.accent) {
+            document.documentElement.style.setProperty("--accent-green", data.accent);
+            localStorage.setItem(COLOR_KEY, data.accent);
+            document.querySelector("#setting > span.accent-background").style.backgroundColor = data.accent;
+            document.querySelectorAll(".accent-text").forEach((el) => (el.style.color = data.accent));
+          }
+
+          // Apply start/end arrays
+          if (Array.isArray(data.start)) {
+            setStoredChips("start", data.start);
+            renderChips("start", el.startChips, el.startInput);
+          }
+          if (Array.isArray(data.end)) {
+            setStoredChips("end", data.end);
+            renderChips("end", el.endChips, el.endInput);
+          }
+
+          alert("Import successful!");
+        } catch (err) {
+          console.error(err);
+          alert("Failed to import file. Please ensure it's a valid JSON export.");
+        }
+      });
     </script>
   </body>
 </html>
