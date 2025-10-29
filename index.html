@@ -61,6 +61,10 @@
         font-weight: 500;
       }
 
+      html {
+        scrollbar-width: none;
+      }
+
       body {
         font-family: "San Fransisco", sans-serif;
         background-color: var(--main-color);
@@ -154,6 +158,7 @@
         max-width: 100%;
         padding: 0px 32px;
         scrollbar-width: none;
+        -ms-overflow-style: none;
       }
 
       .chips::-webkit-scrollbar {
@@ -218,7 +223,7 @@
     <div class="box">
       <h2 class="accent-text">Start:</h2>
       <div class="time">
-        <div id="startTimeInput" class="time-input mono accent-text" contenteditable="true">00:00</div>
+        <div id="startTimeInput" class="time-input mono accent-text" contenteditable="true">09:00</div>
         <div class="AMPM mono" id="startAMPM">
           <span id="startAM" class="accent-text">AM</span>
           <span id="startPM" class="inactive">PM</span>
@@ -238,13 +243,28 @@
           <path d="M12 5l0 14" />
           <path d="M5 12l14 0" />
         </svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-minus"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M5 12l14 0" />
+        </svg>
       </div>
     </div>
 
     <div class="box">
       <h2 class="accent-text">End:</h2>
       <div class="time">
-        <div id="endTimeInput" class="time-input mono accent-text" contenteditable="true">00:00</div>
+        <div id="endTimeInput" class="time-input mono accent-text" contenteditable="true">05:00</div>
         <div class="AMPM mono" id="endAMPM">
           <span id="endAM" class="inactive">AM</span>
           <span id="endPM" class="accent-text">PM</span>
@@ -262,6 +282,21 @@
         >
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <path d="M12 5l0 14" />
+          <path d="M5 12l14 0" />
+        </svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-minus"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <path d="M5 12l14 0" />
         </svg>
       </div>
@@ -295,6 +330,7 @@
       <div class="settings">
         <div class="settings-items mono" id="setting">
           <span class="accent-background">Accent Color</span>
+          <span id="resetAccentColor" class="accent-text">Reset Accent Color</span>
           <span id="export" class="accent-text">Export Saved Times</span>
           <span id="import" class="accent-text">Import Saved Times</span>
           <span id="resetWebApp">Reset Web App</span>
@@ -499,10 +535,9 @@
 
       function renderChips(kind, chipsContainer, inputEl) {
         const chips = getStoredChips(kind);
-        // CLEAR THE CONTAINER TO PREVENT DUPLICATES:
+
+        // CLEAR PREVIOUS CHIPS (keep SVG)
         for (let i = chipsContainer.children.length - 1; i >= 0; i--) {
-          // Don't remove <svg>, only remove <p> chips
-          // console.log(chipsContainer.children[i].tagName);
           if (chipsContainer.children[i].tagName !== "svg") {
             chipsContainer.removeChild(chipsContainer.children[i]);
           }
@@ -512,10 +547,23 @@
 
         chips.forEach((val) => {
           const { time, meridiem } = extractTimeAndMeridiem(val, kind);
-          chipsContainer.appendChild(createChip(val, () => setInputValue(inputEl, time, meridiem, kind)));
+          const chip = createChip(val, () => {
+            // When chip is clicked:
+            setInputValue(inputEl, time, meridiem, kind);
+
+            // Move this chip to the front
+            let stored = getStoredChips(kind);
+            const index = stored.indexOf(val);
+            if (index > -1) {
+              stored.splice(index, 1); // remove it
+              stored.unshift(val); // add to front
+              setStoredChips(kind, stored);
+              renderChips(kind, chipsContainer, inputEl); // re-render visually
+            }
+          });
+          chipsContainer.appendChild(chip);
         });
 
-        // Re-run Squircles when chips are rendered (on chip add or other render)
         if (window.applySquircles) window.applySquircles();
       }
 
@@ -708,6 +756,34 @@
       el.endChips.querySelector("svg").addEventListener("click", () => addChip("end", el.endInput, el.endChips, () => endMeridiem));
       el.breakChips.querySelector("svg")?.addEventListener("click", () => addChip("break", el.breakInput, el.breakChips));
 
+      // Remove first chip when minus button is clicked
+      el.startChips.querySelectorAll("svg")[1].addEventListener("click", () => {
+        const chips = getStoredChips("start");
+        if (chips.length > 0) {
+          chips.shift(); // remove first element
+          setStoredChips("start", chips);
+          renderChips("start", el.startChips, el.startInput);
+        }
+      });
+
+      el.endChips.querySelectorAll("svg")[1].addEventListener("click", () => {
+        const chips = getStoredChips("end");
+        if (chips.length > 0) {
+          chips.shift();
+          setStoredChips("end", chips);
+          renderChips("end", el.endChips, el.endInput);
+        }
+      });
+
+      el.breakChips.querySelectorAll("svg")[1]?.addEventListener("click", () => {
+        const chips = getStoredChips("break");
+        if (chips.length > 0) {
+          chips.shift();
+          setStoredChips("break", chips);
+          renderChips("break", el.breakChips, el.breakInput);
+        }
+      });
+
       // =========================
       // ===== ACCENT COLOR ======
       // =========================
@@ -751,6 +827,23 @@
             .join("")
         );
       }
+
+      const resetAccentBtn = document.getElementById("resetAccentColor");
+      resetAccentBtn.addEventListener("click", () => {
+        const defaultColor = "#00ff80";
+
+        // Reset CSS variable
+        document.documentElement.style.setProperty("--accent-green", defaultColor);
+
+        // Update the Accent Color button background
+        accentButton.style.backgroundColor = defaultColor;
+
+        // Update all text elements with accent color
+        document.querySelectorAll(".accent-text").forEach((el) => (el.style.color = defaultColor));
+
+        // Remove saved color from localStorage
+        localStorage.removeItem(COLOR_KEY);
+      });
 
       // =========================
       // ====== EXPORT / IMPORT ===
