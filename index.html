@@ -38,8 +38,11 @@
         padding: 0px;
         margin: 0px;
         -webkit-tap-highlight-color: transparent;
-        text-box-trim: trim-both;
-        text-box-edge: cap alphabetic;
+        /* text-box-trim: trim-both; */
+        /* text-box-edge: cap alphabetic; */
+
+        /* using line height based off what it is in figma, for more compatibility. */
+        line-height: 11px;
       }
 
       @font-face {
@@ -85,6 +88,8 @@
       h2 {
         font-size: 32px;
         padding: 32px 0px 0px 32px;
+
+        line-height: 23px;
       }
 
       .time,
@@ -109,6 +114,8 @@
 
       .settings-items > span {
         font-size: 24px;
+
+        line-height: 17px;
       }
 
       .AMPM > span {
@@ -116,6 +123,8 @@
         cursor: pointer;
         user-select: none;
         transition: color 0.1s;
+
+        line-height: 17px;
       }
 
       .time-input {
@@ -124,6 +133,8 @@
         border: none;
         /* border-radius: 10px; */
         transition: none;
+
+        line-height: 45px;
       }
 
       .time-input:focus {
@@ -160,6 +171,8 @@
         flex: 0 0 auto;
         cursor: pointer;
         transition: background 0.1s, color 0.1s;
+
+        line-height: 17px;
       }
 
       .chips > svg {
