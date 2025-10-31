@@ -38,11 +38,11 @@
         padding: 0px;
         margin: 0px;
         -webkit-tap-highlight-color: transparent;
-        /* text-box-trim: trim-both; */
-        /* text-box-edge: cap alphabetic; */
+        text-box-trim: trim-both;
+        text-box-edge: cap alphabetic;
 
         /* using line height based off what it is in figma, for more compatibility. */
-        line-height: 11px;
+        /* line-height: 11px; */
       }
 
       @font-face {
@@ -93,7 +93,7 @@
         font-size: 32px;
         padding: 32px 0px 0px 32px;
 
-        line-height: 23px;
+        /* line-height: 23px; */
       }
 
       .time,
@@ -119,7 +119,7 @@
       .settings-items > span {
         font-size: 24px;
 
-        line-height: 17px;
+        /* line-height: 17px; */
       }
 
       .AMPM > span {
@@ -128,7 +128,7 @@
         user-select: none;
         transition: color 0.1s;
 
-        line-height: 17px;
+        /* line-height: 17px; */
       }
 
       .time-input {
@@ -138,7 +138,7 @@
         /* border-radius: 10px; */
         transition: none;
 
-        line-height: 45px;
+        /* line-height: 45px; */
       }
 
       .time-input:focus {
@@ -177,7 +177,7 @@
         cursor: pointer;
         transition: background 0.1s, color 0.1s;
 
-        line-height: 17px;
+        /* line-height: 17px; */
       }
 
       .chips > svg {
@@ -329,7 +329,7 @@
       <h2 class="accent-text">Settings:</h2>
       <div class="settings">
         <div class="settings-items mono" id="setting">
-          <span class="accent-background">Accent Color</span>
+          <span id="accent-background">Accent Color</span>
           <span id="resetAccentColor" class="accent-text">Reset Accent Color</span>
           <span id="export" class="accent-text">Export Saved Times</span>
           <span id="import" class="accent-text">Import Saved Times</span>
@@ -789,7 +789,7 @@
       // =========================
 
       const colorPicker = document.getElementById("accentColorPicker");
-      const accentButton = document.querySelector("#setting > span.accent-background");
+      const accentButton = document.querySelector("#accent-background");
 
       // Load saved accent color
       const savedColor = localStorage.getItem(COLOR_KEY);
