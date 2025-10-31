@@ -909,6 +909,48 @@
           alert("Failed to import file. Please ensure it's a valid JSON export.");
         }
       });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // https://caniuse.com/css-text-box-trim
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+        // Helper: Get iOS version as array of ints, e.g. [17,2]
+        function getIOSVersion() {
+          const match = ua.match(/OS (\d+)[._](\d+)(?:[._](\d+))?/);
+          if (!match) return null;
+          return [parseInt(match[1], 10), parseInt(match[2], 10)];
+        }
+
+        const iosVersionArr = getIOSVersion();
+        const isBelow182 = iosVersionArr && (iosVersionArr[0] < 18 || (iosVersionArr[0] === 18 && iosVersionArr[1] < 2));
+
+        if (isIOS && isBelow182) {
+          Array.from(document.getElementsByTagName("*")).forEach((el) => {
+            el.style.lineHeight = "11px";
+          });
+
+          Array.from(document.getElementsByTagName("h2")).forEach((el) => {
+            el.style.lineHeight = "23px";
+          });
+
+          document.querySelectorAll(".settings-items > span").forEach((el) => {
+            el.style.lineHeight = "17px";
+          });
+
+          document.querySelectorAll(".AMPM > span").forEach((el) => {
+            el.style.lineHeight = "17px";
+          });
+
+          document.querySelectorAll(".time-input").forEach((el) => {
+            el.style.lineHeight = "45px";
+          });
+
+          document.querySelectorAll(".chips > *, .settings-items > span:first-child").forEach((el) => {
+            el.style.lineHeight = "17px";
+          });
+        }
+      });
     </script>
   </body>
 </html>
